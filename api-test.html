@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoinFlow Döviz API Test</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#0a0a14;color:#eee;padding:20px;max-width:500px;margin:0 auto}
+h1{font-size:18px;margin-bottom:16px;color:#34d399}
+.api-test{background:#12121e;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px}
+.api-name{font-weight:700;font-size:13px;margin-bottom:6px}
+.api-url{font-size:10px;color:#666;word-break:break-all;margin-bottom:8px}
+.api-status{font-size:12px;padding:6px 10px;border-radius:8px;display:inline-block}
+.loading{background:#1a1a2e;color:#fbbf24}
+.success{background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.2)}
+.fail{background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2)}
+.rates{font-size:11px;color:#888;margin-top:6px}
+.rates b{color:#eee}
+.time{font-size:10px;color:#555;margin-top:4px}
+button{padding:12px 20px;border-radius:10px;background:#34d399;color:#0a0a14;border:none;font-weight:700;font-size:14px;cursor:pointer;width:100%;margin-top:12px;font-family:inherit}
+button:active{opacity:0.8}
+.summary{background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(59,130,246,0.08));border:1px solid rgba(52,211,153,0.15);border-radius:12px;padding:16px;margin-top:14px;text-align:center}
+.summary-title{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.summary-rate{font-size:28px;font-weight:800;color:#34d399}
+</style>
+</head>
+<body>
+<h1>💱 CoinFlow Döviz API Test</h1>
+<p style="font-size:12px;color:#666;margin-bottom:16px">4 API'yi sırayla test eder, hangisi çalışıyorsa onu gösterir</p>
+
+<div id="results"></div>
+<div id="summary" style="display:none" class="summary">
+  <div class="summary-title">Sonuç</div>
+  <div id="summaryRate" class="summary-rate"></div>
+  <div id="summaryDetail" style="font-size:11px;color:#888;margin-top:4px"></div>
+</div>
+
+<button onclick="runTests()">🔄 Tüm API'leri Test Et</button>
+
+<script>
+const apis = [
+  {
+    name: "Frankfurter (ECB)",
+    url: "https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP",
+    parse: d => ({usd: d.rates.TRY, eur: d.rates.TRY/d.rates.EUR, gbp: d.rates.TRY/d.rates.GBP})
+  },
+  {
+    name: "ExchangeRate-API",
+    url: "https://api.exchangerate-api.com/v4/latest/USD",
+    parse: d => ({usd: d.rates.TRY, eur: d.rates.TRY/d.rates.EUR, gbp: d.rates.TRY/d.rates.GBP})
+  },
+  {
+    name: "Open ER-API",
+    url: "https://open.er-api.com/v6/latest/USD",
+    parse: d => ({usd: d.rates.TRY, eur: d.rates.TRY/d.rates.EUR, gbp: d.rates.TRY/d.rates.GBP})
+  },
+  {
+    name: "Fawazahmed0 (jsDelivr CDN)",
+    url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+    parse: d => ({usd: d.usd.try, eur: d.usd.try/d.usd.eur, gbp: d.usd.try/d.usd.gbp})
+  }
+];
+
+async function runTests() {
+  const results = document.getElementById("results");
+  const summary = document.getElementById("summary");
+  summary.style.display = "none";
+  
+  results.innerHTML = apis.map((a,i) => `
+    <div class="api-test" id="api${i}">
+      <div class="api-name">${i+1}. ${a.name}</div>
+      <div class="api-url">${a.url}</div>
+      <div class="api-status loading">⏳ Test ediliyor...</div>
+    </div>
+  `).join("");
+  
+  let firstSuccess = null;
+  
+  for(let i = 0; i < apis.length; i++) {
+    const api = apis[i];
+    const el = document.getElementById("api" + i);
+    const start = Date.now();
+    
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      
+      const r = await fetch(api.url, {signal: controller.signal});
+      clearTimeout(timeout);
+      
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      
+      const d = await r.json();
+      const rates = api.parse(d);
+      const ms = Date.now() - start;
+      
+      if(!rates.usd || rates.usd < 30 || rates.usd > 60) throw new Error("Geçersiz kur: " + rates.usd);
+      
+      el.querySelector(".api-status").className = "api-status success";
+      el.querySelector(".api-status").textContent = "✅ Çalışıyor! (" + ms + "ms)";
+      el.innerHTML += `<div class="rates">🇺🇸 $1 = <b>₺${rates.usd.toFixed(4)}</b> · 🇪🇺 €1 = <b>₺${rates.eur.toFixed(4)}</b> · 🇬🇧 £1 = <b>₺${rates.gbp.toFixed(4)}</b></div>`;
+      el.innerHTML += `<div class="time">${ms}ms · ${new Date().toLocaleTimeString("tr-TR")}</div>`;
+      
+      if(!firstSuccess) firstSuccess = {api: api.name, rates, ms};
+      
+    } catch(e) {
+      const ms = Date.now() - start;
+      el.querySelector(".api-status").className = "api-status fail";
+      el.querySelector(".api-status").textContent = "❌ Başarısız (" + ms + "ms)";
+      el.innerHTML += `<div class="rates" style="color:#f87171">${e.message}</div>`;
+    }
+  }
+  
+  summary.style.display = "block";
+  if(firstSuccess) {
+    document.getElementById("summaryRate").textContent = "$1 = ₺" + firstSuccess.rates.usd.toFixed(4);
+    document.getElementById("summaryRate").style.color = "#34d399";
+    document.getElementById("summaryDetail").textContent = "✅ " + firstSuccess.api + " üzerinden canlı kur alındı (" + firstSuccess.ms + "ms)";
+  } else {
+    document.getElementById("summaryRate").textContent = "⚠️ Hiçbir API çalışmadı";
+    document.getElementById("summaryRate").style.color = "#f87171";
+    document.getElementById("summaryDetail").textContent = "Önbellek değerleri kullanılacak: $1=₺44.22";
+  }
+}
+
+// Auto-run on load
+runTests();
+</script>
+</body>
+</html>
