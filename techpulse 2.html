@@ -120,7 +120,8 @@ var MK=["iphone","android","samsung","pixel","ios ","telefon","phone","ipad","xi
 var SK=["bilim","science","nasa","uzay","space","fizik","mars","quantum","kuantum","iklim","araştırma"];
 
 var A=[],cc="all",cs="all",sv=[],lp="p0",logs=[];
-try{sv=JSON.parse(localStorage.getItem("tp3s"))||[]}catch(e){}
+try{sv=JSON.parse(localStorage.getItem("tp3s"))||[];sv.forEach(function(n){if(typeof n.dt==="string")n.dt=new Date(n.dt)})}catch(e){}
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
 var th=localStorage.getItem("tp3t")||"dark";
 function aT(){document.documentElement.classList.toggle("light",th!=="dark");document.getElementById("thB").textContent=th==="dark"?"🌙":"☀️"}
 aT();
@@ -142,62 +143,57 @@ function tryFetch(url,timeout){
 
 function fetchFeed(feed){
   return new Promise(function(resolve){
-    var name=feed.n;
+    var name=feed.n,done=false;
+    function res(v){if(!done){done=true;resolve(v)}}
     // Proxy 1: rss2json
     log("→ "+name+": rss2json...");
     tryFetch("https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent(feed.u)+"&count=15",10000)
     .then(function(d){
       if(d.status==="ok"&&d.items&&d.items.length>0){
         log("✅ "+name+": "+d.items.length+" (rss2json)");
-        resolve(d.items.map(function(i){return mkI(i,feed)}).filter(function(n){return n.t.length>5}));
+        res(d.items.map(function(i){return mkI(i,feed)}).filter(function(n){return n.t.length>5}));
       }else{throw new Error("no items")}
     })
     .catch(function(e){
       log("❌ "+name+": rss2json fail ("+e.message+")");
-      // Proxy 2: corsproxy.io
+      // Proxy 2: corsproxy.io as text with timeout
       log("→ "+name+": corsproxy...");
-      tryFetch("https://corsproxy.io/?"+encodeURIComponent(feed.u),10000)
-      .then(function(d){
-        // corsproxy returns raw text, not json
-        throw new Error("need text");
+      var cc=new AbortController();var ct=setTimeout(function(){cc.abort()},10000);
+      fetch("https://corsproxy.io/?"+encodeURIComponent(feed.u),{signal:cc.signal})
+      .then(function(r){clearTimeout(ct);return r.text()})
+      .then(function(xml){
+        var items=pXml(xml,feed);
+        if(items.length>0){
+          log("✅ "+name+": "+items.length+" (corsproxy)");
+          res(items);
+        }else{throw new Error("no items")}
       })
-      .catch(function(){
-        // Proxy 2b: corsproxy as text
-        fetch("https://corsproxy.io/?"+encodeURIComponent(feed.u),{signal:undefined})
-        .then(function(r){return r.text()})
-        .then(function(xml){
-          var items=pXml(xml,feed);
-          if(items.length>0){
-            log("✅ "+name+": "+items.length+" (corsproxy)");
-            resolve(items);
-          }else{throw new Error("no items")}
+      .catch(function(e2){
+        clearTimeout(ct);
+        log("❌ "+name+": corsproxy fail ("+e2.message+")");
+        // Proxy 3: allorigins
+        log("→ "+name+": allorigins...");
+        tryFetch("https://api.allorigins.win/get?url="+encodeURIComponent(feed.u),10000)
+        .then(function(d){
+          if(d&&d.contents){
+            var items=pXml(d.contents,feed);
+            if(items.length>0){
+              log("✅ "+name+": "+items.length+" (allorigins)");
+              res(items);
+            }else{
+              log("❌ "+name+": allorigins 0 items");
+              res([]);
+            }
+          }else{log("❌ "+name+": allorigins empty");res([])}
         })
-        .catch(function(e2){
-          log("❌ "+name+": corsproxy fail ("+e2.message+")");
-          // Proxy 3: allorigins
-          log("→ "+name+": allorigins...");
-          tryFetch("https://api.allorigins.win/get?url="+encodeURIComponent(feed.u),10000)
-          .then(function(d){
-            if(d&&d.contents){
-              var items=pXml(d.contents,feed);
-              if(items.length>0){
-                log("✅ "+name+": "+items.length+" (allorigins)");
-                resolve(items);
-              }else{
-                log("❌ "+name+": allorigins 0 items");
-                resolve([]);
-              }
-            }else{log("❌ "+name+": allorigins empty");resolve([])}
-          })
-          .catch(function(e3){
-            log("❌ "+name+": allorigins fail ("+e3.message+")");
-            resolve([]);
-          });
+        .catch(function(e3){
+          log("❌ "+name+": allorigins fail ("+e3.message+")");
+          res([]);
         });
       });
     });
     // Ultimate timeout
-    setTimeout(function(){resolve([])},30000);
+    setTimeout(function(){res([])},30000);
   });
 }
 
@@ -247,7 +243,7 @@ function pXml(xml,feed){
   }catch(e){return[]}
 }
 
-function mid(t){try{return btoa(unescape(encodeURIComponent((t||"x").substring(0,25)))).replace(/[^a-zA-Z0-9]/g,"")}catch(e){return"z"+Math.random().toString(36).slice(2)}}
+function mid(t){try{var s=(t||"x").substring(0,25);var bytes=new TextEncoder().encode(s);var bin="";bytes.forEach(function(b){bin+=String.fromCharCode(b)});return btoa(bin).replace(/[^a-zA-Z0-9]/g,"")}catch(e){return"z"+Math.random().toString(36).slice(2)}}
 function exI(h){var m=h.match(/<img[^>]+src=["']([^"']+)/i);return m?m[1]:""}
 function dC(text,def){var t=text.toLowerCase();if(AK.some(function(k){return t.indexOf(k)>=0}))return"ai";if(GK.some(function(k){return t.indexOf(k)>=0}))return"gaming";if(CK.some(function(k){return t.indexOf(k)>=0}))return"crypto";if(MK.some(function(k){return t.indexOf(k)>=0}))return"mobile";if(SK.some(function(k){return t.indexOf(k)>=0}))return"science";return def}
 
@@ -298,7 +294,7 @@ function rF(){
     var isSv=sv.some(function(s){return s.id===n.id});
     var tm=ta(n.dt);
     var imgH=n.img?'<img class="ci" src="'+n.img+'" onerror="this.style.display=\'none\'" loading="lazy">':"";
-    h+='<div class="cd'+(i===0?" ft":"")+'" onclick="oD(\''+n.id+'\')">'+(i===0?'<div class="fb">⚡ ÖNE ÇIKAN</div>':"")+imgH+'<div class="cs"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+n.sc+'"></span> '+n.src+'</div><div class="ct2">'+n.t+'</div><div class="cdd">'+n.d+'</div><div class="cf"><div class="ctm">'+tm+'</div><div class="ca"><button class="cb'+(isSv?" sv":"")+'" onclick="event.stopPropagation();tS(\''+n.id+'\')">'+(isSv?"🔖":"📌")+'</button><button class="cb" onclick="event.stopPropagation();sh(\''+n.id+'\')">↗</button></div></div></div>';
+    h+='<div class="cd'+(i===0?" ft":"")+'" onclick="oD(\''+n.id+'\')">'+(i===0?'<div class="fb">⚡ ÖNE ÇIKAN</div>':"")+imgH+'<div class="cs"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+n.sc+'"></span> '+esc(n.src)+'</div><div class="ct2">'+esc(n.t)+'</div><div class="cdd">'+esc(n.d)+'</div><div class="cf"><div class="ctm">'+tm+'</div><div class="ca"><button class="cb'+(isSv?" sv":"")+'" onclick="event.stopPropagation();tS(\''+n.id+'\')">'+(isSv?"🔖":"📌")+'</button><button class="cb" onclick="event.stopPropagation();sh(\''+n.id+'\')">↗</button></div></div></div>';
   });
   document.getElementById("fM").innerHTML=h;
 }
@@ -306,14 +302,14 @@ function rF(){
 function rSv(){
   if(!sv.length){document.getElementById("sF").innerHTML='<div class="em"><div class="emi">🔖</div><div class="emt">Kayıtlı haber yok</div></div>';return}
   document.getElementById("sF").innerHTML=sv.map(function(n){
-    return'<div class="cd" onclick="oD(\''+n.id+'\')"><div class="cs"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+n.sc+'"></span> '+n.src+'</div><div class="ct2">'+n.t+'</div><div class="cf"><div class="ctm">'+ta(n.dt)+'</div><button class="cb sv" onclick="event.stopPropagation();tS(\''+n.id+'\')">🗑️</button></div></div>';
+    return'<div class="cd" onclick="oD(\''+n.id+'\')"><div class="cs"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+n.sc+'"></span> '+esc(n.src)+'</div><div class="ct2">'+esc(n.t)+'</div><div class="cf"><div class="ctm">'+ta(n.dt)+'</div><button class="cb sv" onclick="event.stopPropagation();tS(\''+n.id+'\')">🗑️</button></div></div>';
   }).join("");
 }
 
 function oD(id){
   var n=A.find(function(x){return x.id===id})||sv.find(function(x){return x.id===id});
   if(!n)return;var isSv=sv.some(function(s){return s.id===n.id});
-  document.getElementById("dB").innerHTML=(n.img?'<img class="di" src="'+n.img+'" onerror="this.style.display=\'none\'">':'')+'<div class="dtt">'+n.t+'</div><div class="dm"><span class="cs" style="margin:0"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+n.sc+'"></span> '+n.src+'</span><span>'+ta(n.dt)+'</span></div><div class="dds">'+n.d+'</div><a href="'+n.link+'" target="_blank" rel="noopener" class="ob">🔗 Haberi Oku</a><button class="ob ob2" onclick="tS(\''+n.id+'\')">'+(isSv?"🔖 Kayıtlı":"📌 Kaydet")+'</button>';
+  document.getElementById("dB").innerHTML=(n.img?'<img class="di" src="'+esc(n.img)+'" onerror="this.style.display=\'none\'">':'')+'<div class="dtt">'+esc(n.t)+'</div><div class="dm"><span class="cs" style="margin:0"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+n.sc+'"></span> '+esc(n.src)+'</span><span>'+ta(n.dt)+'</span></div><div class="dds">'+esc(n.d)+'</div><a href="'+esc(n.link)+'" target="_blank" rel="noopener" class="ob">🔗 Haberi Oku</a><button class="ob ob2" onclick="tS(\''+n.id+'\')">'+(isSv?"🔖 Kayıtlı":"📌 Kaydet")+'</button>';
   nav("p2");
 }
 
