@@ -524,6 +524,23 @@ canvas{max-width:100%!important}
   <button id="clOkBtn" class="btn-p" style="width:100%;padding:14px;border-radius:14px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer" onclick="document.getElementById('changelogModal').classList.add('hidden');D.lastVersion=APP_VERSION;save()">OK 🚀</button>
 </div></div>
 
+<!-- ===== BUDGET SIMULATOR ===== -->
+<div id="simModal" class="modal hidden" onclick="this.classList.add('hidden')"><div class="mbox" onclick="event.stopPropagation()" style="max-height:92vh;padding:14px;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div style="font-size:16px;font-weight:800" data-t="simTitle">🎮 Bütçe Simülatörü</div><div style="font-size:10px;color:var(--t3)" data-t="simSub">Slider'ları kaydır, etkisini anında gör</div></div>
+    <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--t2)" onclick="document.getElementById('simModal').classList.add('hidden')">✕</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="text-align:center;padding:12px;border-radius:14px;background:var(--abg);border:1px solid var(--ab)"><div style="font-size:9px;color:var(--t3)">CURRENT</div><div id="simCurrentBal" style="font-size:18px;font-weight:900;color:var(--accent)">—</div></div>
+    <div style="text-align:center;padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(236,72,153,0.1));border:1px solid rgba(139,92,246,0.2)"><div style="font-size:9px;color:var(--t3)">SIMULATED</div><div id="simNewBal" style="font-size:18px;font-weight:900;color:#a78bfa">—</div></div>
+  </div>
+  <div id="simSavingsResult" style="display:none;padding:10px;border-radius:12px;margin-bottom:12px;text-align:center;font-size:13px;font-weight:700"></div>
+  <div style="font-size:11px;font-weight:700;margin-bottom:8px" data-t="simCategories">Kategorileri Ayarla</div>
+  <div id="simSliders"></div>
+  <div style="font-size:11px;font-weight:700;margin:12px 0 8px" data-t="simSubs">Abonelikleri Kapat/Aç</div>
+  <div id="simSubToggles"></div>
+</div></div>
+
 <!-- ===== ADMIN PANEL ===== -->
 <div id="adminModal" class="modal hidden" onclick="this.classList.add('hidden')"><div class="mbox" onclick="event.stopPropagation()" style="max-height:92vh;padding:12px 14px;overflow-y:auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -677,6 +694,12 @@ canvas{max-width:100%!important}
         <div id="karneTrend" style="font-size:11px;color:var(--t2);padding:8px;border-radius:10px;background:var(--card);border:1px solid var(--border)"></div>
       </div>
     </div>
+    <!-- Missions Card -->
+    <div id="missionsSec" class="sec" style="margin-top:8px"><div class="sh"><div class="st" data-t="missions">🎯 Günlük Görevler</div><div id="missionStreak" style="font-size:11px;font-weight:700;color:var(--gold)"></div></div>
+      <div id="missionsL"></div>
+    </div>
+    <!-- Budget Simulator Button -->
+    <div class="sec" style="margin-top:8px"><button class="sbtn" style="margin:0;width:100%;background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(236,72,153,0.15));border:1px solid rgba(139,92,246,0.2);color:#a78bfa" onclick="openSimulator()" data-t="openSim">🎮 Bütçe Simülatörü — "Ya şunu kessem?" →</button></div>
     <!-- Forecast Tab Link -->
     <div class="sec" style="margin-top:8px"><button class="sbtn" style="margin:0;width:100%;background:linear-gradient(135deg,rgba(52,211,153,0.1),rgba(59,130,246,0.1));border:1px solid var(--ab);color:var(--accent)" onclick="swTab(15,null)" data-t="viewForecast">💡 Detaylı Para Tahmini Görüntüle →</button></div>
     <div id="quickAddSec" class="sec" style="display:none;margin-top:8px"><div class="sh"><div class="st" data-t="quickAdd">⚡ Hızlı Ekle</div></div><div id="quickAddBtns" style="display:flex;gap:4px;flex-wrap:wrap"></div></div>
@@ -817,9 +840,9 @@ canvas{max-width:100%!important}
     <div style="margin-bottom:20px"><div style="font-size:14px;font-weight:600;margin-bottom:10px">👤 <span data-t="myName">İsim</span></div><div style="display:flex;gap:6px"><input type="text" id="nameChangeInput" class="fi" style="flex:1" placeholder=""><button class="lnk" style="padding:10px 16px" onclick="D.userName=document.getElementById('nameChangeInput').value.trim();save();renderGreeting();showToast('✓')">✓</button></div></div>
     <button class="sbtn red" onclick="document.getElementById('resetModal').classList.remove('hidden')" data-t="resetAll">🔄 Tüm Verileri Sıfırla</button>
     <button class="sbtn" style="margin-top:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff" onclick="shareApp()">📤 <span data-t="shareApp">Arkadaşına Öner</span></button>
-    <button class="sbtn" style="margin-top:8px;background:var(--card);border:1px solid var(--border);color:var(--t2)" onclick="showChangelog()">📋 v4.31 — <span data-t="changelogBtn">Güncelleme Geçmişi</span></button>
+    <button class="sbtn" style="margin-top:8px;background:var(--card);border:1px solid var(--border);color:var(--t2)" onclick="showChangelog()">📋 v4.4 — <span data-t="changelogBtn">Güncelleme Geçmişi</span></button>
     <div id="adminBtnWrap" style="display:none;margin-top:12px"><button class="sbtn" style="margin:0;width:100%;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font-weight:700" onclick="openAdminPanel()">🛡️ Admin Panel</button></div>
-    <div style="margin-top:12px;text-align:center;font-size:10px;color:var(--t3)" onclick="this._tc=(this._tc||0)+1;if(this._tc>=7){localStorage.setItem('cf_admin','1');location.reload()}" >CoinFlow v4.31 — Made with ❤️</div>
+    <div style="margin-top:12px;text-align:center;font-size:10px;color:var(--t3)" onclick="this._tc=(this._tc||0)+1;if(this._tc>=7){localStorage.setItem('cf_admin','1');location.reload()}" >CoinFlow v4.4 — Made with ❤️</div>
   </div></div></div>
   <span id="themeBtn" style="display:none"></span>
 </div>
@@ -867,10 +890,11 @@ canvas{max-width:100%!important}
 
 <script>
 // ===== APP VERSION & CHANGELOG =====
-const APP_VERSION='4.31';
+const APP_VERSION='4.4';
 const CHANGELOG_I18N={
 tr:[
-  {version:'4.31',date:'26 Mart 2026',sections:[{type:'added',icon:'✨',items:['🛡️ Gizli Admin Paneli — Canlı istatistikler, trafik logu, cihaz bilgisi','📊 Günlük trafik grafiği (son 30 gün)','🌐 API durum monitörü (4 API canlı test)','🧪 Test data enjektörü','💾 Storage & cache yönetimi','📋 JSON export & clipboard kopyalama']}]},
+  {version:'4.4',date:'4 Nisan 2026',sections:[{type:'added',icon:'✨',items:['🎯 Günlük Görev Sistemi — Harcamasız Gün, Bütçe Ustası, Her Şeyi Kaydet + seri takibi','🎮 Bütçe Simülatörü — Kategori slider\'ları ile "Ya şunu kessem?" canlı analiz','🤖 Akıllı Kurallar — Kullanım alışkanlıklarından öğrenerek otomatik kategori önerisi','📺 Simülatörde abonelik aç/kapat ile tasarruf hesaplama']}]},
+  {version:'4.31',date:'26 Mart 2026',sections:[{type:'added',icon:'✨',items:['🛡️ Gizli Admin Paneli — Canlı istatistikler, trafik logu, cihaz bilgisi','📊 Günlük trafik grafiği (son 30 gün)','🌐 API durum monitörü','🧪 Test data enjektörü']}]},
   {version:'4.3',date:'26 Mart 2026',sections:[{type:'added',icon:'✨',items:['💡 Akıllı Para Tahmini — Ay sonu bakiye tahmini, harcama hızı, kategori bazlı analiz','⚡ Doğal Dil ile İşlem Ekleme — \"migros 150\" yaz, otomatik kategori algıla','📊 Haftalık Karne — A+ ile F arası not, trend analizi, geçen haftayla karşılaştırma','📈 Harcama paterni grafiği (günlük çubuk grafik)','🧠 AI öneriler (bütçe aşım uyarısı, güvenli günlük limit)']}]},
   {version:'4.2',date:'26 Mart 2026',sections:[{type:'added',icon:'✨',items:['👥 Canlı kullanıcı sayacı (admin)','🌍 Otomatik dil algılama','📋 Güncelleme geçmişi 4 dile çevrildi']},{type:'fixed',icon:'🔧',items:['🛡️ AdSense politika ihlali düzeltildi','🚀 Splash + karşılama çoklu dil destekli']}]},
   {version:'4.11',date:'21 Mart 2026',sections:[{type:'fixed',icon:'🔧',items:['📄 Rapor sayfasındaki çeviri hatası düzeltildi','🌐 GELİR/GİDER etiketleri tüm dillerde çalışıyor']}]},
@@ -881,7 +905,8 @@ tr:[
   {version:'1.0',date:'16 Mart 2026',sections:[{type:'added',icon:'✨',items:['CoinFlow ilk sürüm 🎉','Temel bütçe takibi','PWA desteği']}]}
 ],
 en:[
-  {version:'4.31',date:'Mar 26, 2026',sections:[{type:'added',icon:'✨',items:['🛡️ Hidden Admin Panel — Live stats, traffic log, device info','📊 Daily traffic chart (last 30 days)','🌐 API status monitor','🧪 Test data injector','💾 Storage & cache management']}]},
+  {version:'4.4',date:'Apr 4, 2026',sections:[{type:'added',icon:'✨',items:['🎯 Daily Missions — No-Spend Day, Budget Master, Track Everything + streak','🎮 Budget Simulator — "What if I cut this?" category sliders + sub toggles','🤖 Smart Rules — learns from your habits, auto-suggests categories','📺 Simulator subscription on/off with savings calculation']}]},
+  {version:'4.31',date:'Mar 26, 2026',sections:[{type:'added',icon:'✨',items:['🛡️ Hidden Admin Panel','📊 Daily traffic chart','🌐 API status monitor','🧪 Test data injector']}]},
   {version:'4.3',date:'Mar 26, 2026',sections:[{type:'added',icon:'✨',items:['💡 Smart Forecast — End-of-month balance prediction, spending velocity, category analysis','⚡ Natural Language Input — Type "grocery 150" to auto-add with category detection','📊 Weekly Report Card — Grades from A+ to F, trend analysis, week-over-week comparison','📈 Spending pattern chart (daily bar graph)','🧠 AI recommendations (budget warnings, safe daily limit)']}]},
   {version:'4.2',date:'Mar 26, 2026',sections:[{type:'added',icon:'✨',items:['👥 Live user counter (admin)','🌍 Auto language detection','📋 Changelog translated to 4 languages']},{type:'fixed',icon:'🔧',items:['🛡️ AdSense policy violation fixed','🚀 Splash + welcome multi-language']}]},
   {version:'4.11',date:'Mar 21, 2026',sections:[{type:'fixed',icon:'🔧',items:['📄 Fixed translation error on report page','🌐 INCOME/EXPENSE labels now work in all languages']}]},
@@ -940,7 +965,7 @@ function showChangelog(){
 const L={
 tr:{
   // Nav
-  home:"Özet",analysis:"Analiz",goals:"Hedefler",wallets:"Cüzdanlar",debts:"Borçlar",installments:"Taksit",subs:"Abo",forex:"Döviz",report:"Rapor",projects:"Proje",settings:"Ayarlar",forecast:"Tahmin",smartAdd:"⚡ Akıllı Ekle",weeklyGrade:"📊 Haftalık Karne",viewForecast:"💡 Detaylı Para Tahmini Görüntüle →",forecastTitle:"💡 Akıllı Para Tahmini",nlpPlaceholder:"örn: migros 150, maaş 15000...",
+  home:"Özet",analysis:"Analiz",goals:"Hedefler",wallets:"Cüzdanlar",debts:"Borçlar",installments:"Taksit",subs:"Abo",forex:"Döviz",report:"Rapor",projects:"Proje",settings:"Ayarlar",forecast:"Tahmin",smartAdd:"⚡ Akıllı Ekle",weeklyGrade:"📊 Haftalık Karne",viewForecast:"💡 Detaylı Para Tahmini Görüntüle →",forecastTitle:"💡 Akıllı Para Tahmini",nlpPlaceholder:"örn: migros 150, maaş 15000...",missions:"🎯 Günlük Görevler",openSim:"🎮 Bütçe Simülatörü — \"Ya şunu kessem?\" →",simTitle:"🎮 Bütçe Simülatörü",simSub:"Slider'ları kaydır, etkisini anında gör",
   // Header & Greeting
   goodMorning:"Günaydın",goodAfternoon:"İyi günler",goodEvening:"İyi akşamlar",goodNight:"İyi geceler",
   // Balance card
@@ -1482,7 +1507,7 @@ function render(){
   else{sa.style.display="block";sa.textContent=t("seeAll");rl.innerHTML=[...me].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(e=>eHTML(e,true)).join("")}
   // New features
   renderStreak();renderMood();renderBadges();checkBudgetAlerts();renderQuickAdd();
-  renderHealthScore();renderHeatmap();renderInsights();renderChallenges();renderGreeting();renderDailySummary();translateUI();
+  renderHealthScore();renderHeatmap();renderInsights();renderChallenges();renderGreeting();renderDailySummary();renderMissions();translateUI();
 }
 
 function eHTML(e,click=false){const c=gC(e.category);const oc=click?`onclick="openAction('${e.id}')"`:"";
@@ -1549,7 +1574,7 @@ function submitEntry(){if(_submitting)return;let a=parseFloat(document.getElemen
   if(curCur!=="TRY"){entry.originalAmount=a;entry.originalCur=curCur;entry.usedRate=rate}
   if(curCur==="USD"){entry.originalUSD=a;entry.usedRate=usdRate}
   if(receiptData)entry.receipt=receiptData;
-  D.entries.unshift(entry);save();showPg("pageHome");showToast(addType==="income"?t("income")+" "+t("added"):t("expense")+" "+t("added"))}
+  applySmartRules(entry);D.entries.unshift(entry);save();showPg("pageHome");renderMissions();showToast(addType==="income"?t("income")+" "+t("added"):t("expense")+" "+t("added"))}
 
 function renderGoals(){const gl=document.getElementById("goalsL");
   if(D.goals.length===0){gl.innerHTML='<div class="empty"><div class="empty-i">🎯</div><div class="empty-t">'+t("noGoals")+'</div>'+t("addSavingsGoal")+'</div>';return}
@@ -2392,12 +2417,14 @@ function parseNLP(){
     if(w<words.length-1){var tw=words[w]+' '+words[w+1];if(catMap[tw]){foundCat=catMap[tw];foundKey=tw;
       if(incomeKeys.indexOf(tw)!==-1)isIncome=true;break}}
   }
+  // Smart rules: check learned patterns
+  if(!foundCat){var rSug=suggestFromRules(input);if(rSug){foundCat=rSug.cat;if(rSug.type==='income')isIncome=true}}
   if(!foundCat)foundCat=isIncome?'diger_gelir':'diger_gider';
   var type=isIncome?'income':'expense';
   var ci=gC(foundCat);
   // Add entry
   var entry={id:'e'+Date.now(),type:type,category:foundCat,amount:amount,note:foundKey||input.replace(/[0-9.,]/g,'').trim(),month:gMK(),date:new Date().toISOString(),wallet:'nakit'};
-  D.entries.push(entry);save();render();renderWeeklyKarne();
+  applySmartRules(entry);D.entries.push(entry);save();render();renderWeeklyKarne();renderMissions();
   // Show result
   result.style.display='block';result.style.color='var(--accent)';
   result.innerHTML=ci.i+' <b>'+ci.l+'</b> — '+(type==='income'?'+':'-')+fmt(amount)+' '+(curLang==='en'?'added!':'eklendi!');
@@ -2407,6 +2434,142 @@ function parseNLP(){
 }
 // Enter key for NLP
 document.getElementById('nlpInput').addEventListener('keydown',function(e){if(e.key==='Enter')parseNLP()});
+
+// ===== FEATURE: DAILY MISSIONS =====
+function renderMissions(){
+  var sec=document.getElementById('missionsSec');if(!sec)return;
+  var today=new Date().toISOString().slice(0,10);
+  var me=D.entries.filter(function(e){return e.month===gMK()});
+  var todayExp=D.entries.filter(function(e){return e.date&&e.date.slice(0,10)===today&&e.type==='expense'});
+  var todayTotal=todayExp.reduce(function(s,e){return s+e.amount},0);
+  var dim=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+  var dailyBudget=D.budget?Math.round(D.budget/dim):0;
+  // Calculate no-spend streak
+  var noSpendStreak=0;var checkDate=new Date();checkDate.setDate(checkDate.getDate()-1);
+  for(var i=0;i<30;i++){
+    var ds=checkDate.toISOString().slice(0,10);
+    var dayExp=D.entries.filter(function(e){return e.date&&e.date.slice(0,10)===ds&&e.type==='expense'}).reduce(function(s,e){return s+e.amount},0);
+    if(dayExp===0&&D.entries.some(function(e){return e.date&&e.date.slice(0,10)<=ds}))noSpendStreak++;else break;
+    checkDate.setDate(checkDate.getDate()-1);
+  }
+  if(todayTotal===0)noSpendStreak++;
+  // Missions
+  var missions=[
+    {id:'noSpend',icon:'🚫',title:curLang==='en'?'No-Spend Day':'Harcamasız Gün',
+     desc:curLang==='en'?'Don\'t spend anything today':'Bugün hiç harcama yapma',
+     done:todayTotal===0,progress:todayTotal===0?100:Math.max(0,100-Math.round((todayTotal/(dailyBudget||1))*100)),
+     reward:curLang==='en'?'🔥 '+noSpendStreak+' day streak':'🔥 '+noSpendStreak+' gün seri'},
+    {id:'underBudget',icon:'💰',title:curLang==='en'?'Budget Master':'Bütçe Ustası',
+     desc:curLang==='en'?'Stay under daily budget ('+fmt(dailyBudget)+')':'Günlük bütçenin altında kal ('+fmt(dailyBudget)+')',
+     done:dailyBudget>0&&todayTotal<=dailyBudget,progress:dailyBudget>0?Math.min(100,Math.round(((dailyBudget-todayTotal)/dailyBudget)*100)):0,
+     reward:dailyBudget>0?fmt(dailyBudget-todayTotal)+(curLang==='en'?' saved':' kaldı'):'—'},
+    {id:'trackAll',icon:'📝',title:curLang==='en'?'Track Everything':'Her Şeyi Kaydet',
+     desc:curLang==='en'?'Add at least 1 transaction today':'Bugün en az 1 işlem ekle',
+     done:todayExp.length>0||D.entries.filter(function(e){return e.date&&e.date.slice(0,10)===today&&e.type==='income'}).length>0,
+     progress:D.entries.filter(function(e){return e.date&&e.date.slice(0,10)===today}).length>0?100:0,
+     reward:curLang==='en'?'Builds your streak!':'Serini büyüt!'}
+  ];
+  // Streak badge
+  var completedToday=missions.filter(function(m){return m.done}).length;
+  document.getElementById('missionStreak').textContent='⭐ '+completedToday+'/'+missions.length;
+  // Render
+  document.getElementById('missionsL').innerHTML=missions.map(function(m){
+    var color=m.done?'var(--accent)':'var(--t3)';
+    return'<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--card);border:1px solid '+(m.done?'var(--ab)':'var(--border)')+';margin-bottom:6px'+(m.done?';opacity:0.7':'')+'">'+
+      '<div style="font-size:22px;'+(m.done?'filter:grayscale(0)':'filter:grayscale(0.3)')+'">'+m.icon+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:12px;font-weight:700;color:'+(m.done?'var(--accent)':'var(--text)')+'">'+m.title+(m.done?' ✓':'')+'</div><div style="font-size:9px;color:var(--t3)">'+m.reward+'</div></div>'+
+        '<div style="font-size:10px;color:var(--t2);margin:2px 0">'+m.desc+'</div>'+
+        '<div class="prog-bar" style="height:4px"><div class="prog-fill '+(m.done?'pg':'pr')+'" style="width:'+Math.max(0,m.progress)+'%"></div></div>'+
+      '</div></div>';
+  }).join('');
+}
+
+// ===== FEATURE: BUDGET SIMULATOR =====
+function openSimulator(){
+  var me=D.entries.filter(function(e){return e.month===selMonth});
+  var inc=me.filter(function(e){return e.type==='income'}).reduce(function(s,e){return s+e.amount},0);
+  var exp=me.filter(function(e){return e.type==='expense'}).reduce(function(s,e){return s+e.amount},0);
+  var bal=inc-exp;
+  document.getElementById('simCurrentBal').textContent=fmt(bal);
+  document.getElementById('simNewBal').textContent=fmt(bal);
+  // Category sliders
+  var cats={};me.filter(function(e){return e.type==='expense'}).forEach(function(e){cats[e.category]=(cats[e.category]||0)+e.amount});
+  var catArr=Object.entries(cats).sort(function(a,b){return b[1]-a[1]}).slice(0,8);
+  var html='';catArr.forEach(function(pair){
+    var ci=gC(pair[0]);
+    html+='<div style="margin-bottom:10px;padding:8px;border-radius:10px;background:var(--card);border:1px solid var(--border)">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:11px;font-weight:600">'+ci.i+' '+ci.l+'</span><span class="sim-val" id="simV_'+pair[0]+'" style="font-size:12px;font-weight:800;color:var(--red)">'+fmt(pair[1])+'</span></div>'+
+      '<input type="range" min="0" max="'+Math.round(pair[1]*1.5)+'" value="'+pair[1]+'" step="'+Math.max(1,Math.round(pair[1]/20))+'" data-cat="'+pair[0]+'" data-orig="'+pair[1]+'" style="width:100%;accent-color:var(--accent)" oninput="updateSim()">'+
+      '<div style="display:flex;justify-content:space-between;font-size:8px;color:var(--t3)"><span>₺0</span><span>'+fmt(pair[1])+'</span><span>'+fmt(Math.round(pair[1]*1.5))+'</span></div></div>';
+  });
+  document.getElementById('simSliders').innerHTML=html;
+  // Subscription toggles
+  var subHtml='';
+  D.subscriptions.filter(function(s){return s.active}).forEach(function(s){
+    subHtml+='<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:var(--card);border:1px solid var(--border);margin-bottom:4px;cursor:pointer">'+
+      '<input type="checkbox" checked data-price="'+s.price+'" onchange="updateSim()" style="accent-color:var(--accent)">'+
+      '<span style="flex:1;font-size:11px;font-weight:600">'+(s.icon||'📺')+' '+s.name+'</span>'+
+      '<span style="font-size:11px;color:var(--red);font-weight:700">'+fmt(s.price)+(curLang==='en'?'/mo':'/ay')+'</span></label>';
+  });
+  document.getElementById('simSubToggles').innerHTML=subHtml||(curLang==='en'?'<div style="font-size:11px;color:var(--t3)">No active subscriptions</div>':'<div style="font-size:11px;color:var(--t3)">Aktif abonelik yok</div>');
+  document.getElementById('simModal').classList.remove('hidden');
+}
+function updateSim(){
+  var me=D.entries.filter(function(e){return e.month===selMonth});
+  var inc=me.filter(function(e){return e.type==='income'}).reduce(function(s,e){return s+e.amount},0);
+  var origExp=me.filter(function(e){return e.type==='expense'}).reduce(function(s,e){return s+e.amount},0);
+  var newExp=0;var totalSaved=0;
+  document.querySelectorAll('#simSliders input[type=range]').forEach(function(sl){
+    var orig=parseFloat(sl.dataset.orig);var val=parseFloat(sl.value);
+    newExp+=val;totalSaved+=(orig-val);
+    var label=document.getElementById('simV_'+sl.dataset.cat);
+    if(label){label.textContent=fmt(val);label.style.color=val<orig?'var(--accent)':val>orig?'var(--red)':'var(--t2)'}
+  });
+  // Add unchanged categories
+  var slidCats={};document.querySelectorAll('#simSliders input[type=range]').forEach(function(sl){slidCats[sl.dataset.cat]=true});
+  me.filter(function(e){return e.type==='expense'&&!slidCats[e.category]}).forEach(function(e){newExp+=e.amount});
+  // Sub savings
+  var subSaved=0;
+  document.querySelectorAll('#simSubToggles input[type=checkbox]').forEach(function(cb){
+    if(!cb.checked)subSaved+=parseFloat(cb.dataset.price);
+  });
+  totalSaved+=subSaved;newExp-=subSaved;
+  var newBal=inc-newExp;
+  document.getElementById('simNewBal').textContent=fmt(newBal);
+  document.getElementById('simNewBal').style.color=newBal>=0?'#a78bfa':'var(--red)';
+  var res=document.getElementById('simSavingsResult');
+  if(totalSaved!==0){
+    res.style.display='block';
+    res.style.background=totalSaved>0?'var(--abg)':'var(--rbg)';
+    res.style.border='1px solid '+(totalSaved>0?'var(--ab)':'var(--rb)');
+    res.style.color=totalSaved>0?'var(--accent)':'var(--red)';
+    res.textContent=(totalSaved>0?'💰 ':'📈 ')+(curLang==='en'?'You would save ':'Tasarruf: ')+fmt(Math.abs(totalSaved))+(curLang==='en'?'/month':'/ay');
+  }else{res.style.display='none'}
+}
+
+// ===== FEATURE: SMART RULES =====
+function applySmartRules(entry){
+  // Auto-learn from patterns: if user always categorizes "spotify" as abonelik, remember it
+  var rules=JSON.parse(localStorage.getItem('cf_rules')||'{}');
+  var note=(entry.note||'').toLowerCase().trim();
+  if(note&&note.length>2){rules[note]={cat:entry.category,type:entry.type,count:(rules[note]?.count||0)+1};localStorage.setItem('cf_rules',JSON.stringify(rules))}
+  return entry;
+}
+function suggestFromRules(text){
+  var rules=JSON.parse(localStorage.getItem('cf_rules')||'{}');
+  var t=text.toLowerCase().trim();
+  // Exact match
+  if(rules[t]&&rules[t].count>=2)return rules[t];
+  // Partial match
+  var best=null;var bestCount=0;
+  Object.keys(rules).forEach(function(k){
+    if(t.indexOf(k)>=0||k.indexOf(t)>=0){
+      if(rules[k].count>bestCount){best=rules[k];bestCount=rules[k].count}
+    }
+  });
+  return bestCount>=2?best:null;
+}
 
 // ===== FEATURE 3: WEEKLY REPORT CARD (KARNE) =====
 function renderWeeklyKarne(){
